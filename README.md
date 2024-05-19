@@ -1,6 +1,6 @@
 DISCLAIMER: chatGPT did most of the coding, but i made both fonts. 
+the fonts need to be in the same folder as the html file for it to work
 
-i made this because i wanted a clean clock widget and nothing i found online fit my idea exactly. it also allowed me to add whatever features i wanted.
 basic clock that shows the day, date and time
 has some additional functionality
 the clock displays in the format DAY, dd mm yy, hh mm ss
@@ -13,3 +13,5 @@ typing $123$ starts a countdown for 123 seconds, can be used with any number
 typing musical notes (A-G) and then % at the end plays the notes. you can combine notes inside brackets eg(ABC) to play them all at once
 typing a frequency in Hz and then % plays the frequency until the % is deleted
 typing a "/" opens the download directory on my laptop, but the path will be different for yours, so just avoid it or fix it.
+typing text and ending it with a "&" reverses the text in the input field
+the page doesnt have a calculator function because my browser already has one built in
