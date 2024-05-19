@@ -1,5 +1,6 @@
-DISCLAIMER: chatGPT did most of the coding, but both fonts were made by me. 
+DISCLAIMER: chatGPT did most of the coding, but i made both fonts. 
 
+i made this because i wanted a clean clock widget and nothing i found online fit my idea exactly. it also allowed me to add whatever features i wanted.
 basic clock that shows the day, date and time
 has some additional functionality
 the clock displays in the format DAY, dd mm yy, hh mm ss
