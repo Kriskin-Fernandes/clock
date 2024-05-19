@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New tab</title>
+<style>
+@font-face {
+    font-family: 'Square';
+    src: url('Square.ttf') format('truetype');
+}
+
+@font-face {
+    font-family: 'Morse';
+    src: url('morse.ttf') format('truetype');
+    font-size: 10px; /* Decrease font size for Morse font */
+}
+
+body {
+    font-family: 'Square', monospace; /* Use the custom font for the body */
+    text-align: center;
+    margin-top: 100px;
+    background-color: black; /* Set initial background color to black */
+    color: white; /* Set initial font color to white */
+}
+
+#datetime {
+    font-size: 90px;
+}
+
+#dayOfWeek {
+    font-size: 249px; /* Increase the font size for the day of the week */
+    margin-bottom: 19px; /* Increase margin-bottom to add spacing */
+}
+
+#date {
+    margin-bottom: 0px; /* Increase margin-bottom to add spacing */
+}
+
+#time {
+    margin-bottom: 0px; /* Increase margin-bottom to add spacing */
+}
+
+#colorInput {
+    font-family: 'Square', monospace; /* Use the custom font for the input field */
+    font-size: 90px; /* Set font size to 90 */
+    padding: 25px 5px; /* Increased padding to add 20 pixels of extra height */
+    border: none; /* Remove border */
+    color: inherit; /* Set font color to inherit from parent */
+    outline: none; /* Remove focus outline */
+    width: calc(108px * 8); /* Set width to fit 8 characters */
+    margin-top: 0px; /* Maintain the original margin-top */
+    background: transparent; /* Make background invisible */
+    text-transform: uppercase; /* Convert input text to uppercase */
+}
+
+</style>
+</head>
+<body>
+
+<div id="datetime">
+    <span id="dayOfWeek"></span><br>
+    <span id="date"></span><br>
+    <span id="time"></span>
+</div>
+
+<input type="text" id="colorInput" oninput="handleInput(this.value)" placeholder="">
+
+<script>
+let randomizeInterval;
+let scrambleEnabled = false;
+let updateTimeInterval;
+let randomNumber = null; // Variable to store the random number
+
+function displayDateTime() {
+    var dateTime = new Date();
+    var days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    var dayOfWeek = days[dateTime.getDay()];
+    var year = dateTime.getFullYear().toString().substr(-2); // Get last two digits of the year
+    var month = (dateTime.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-indexed
+    var date = dateTime.getDate().toString().padStart(2, '0');
+    var hours = dateTime.getHours().toString().padStart(2, '0');
+    var minutes = dateTime.getMinutes().toString().padStart(2, '0');
+    var seconds = dateTime.getSeconds().toString().padStart(2, '0');
+
+    // Update the content of the elements
+    document.getElementById("dayOfWeek").textContent = dayOfWeek;
+    document.getElementById("date").textContent = date + ' ' + month + ' ' + year;
+    document.getElementById("time").textContent = hours + ' ' + minutes + ' ' + seconds;
+
+    // Get the background color of the body
+    var bodyBackgroundColor = getComputedStyle(document.body).backgroundColor;
+
+    // Convert the background color to grayscale value
+    var grayscaleValue = getGrayscaleValue(bodyBackgroundColor);
+
+    // Set font color based on grayscale value
+    if (grayscaleValue < 128) {
+        document.body.style.color = "white"; // Set font color to white for darker backgrounds
+    } else {
+        document.body.style.color = "black"; // Set font color to black for lighter backgrounds
+    }
+}
+
+// Function to calculate grayscale value from a color string
+function getGrayscaleValue(color) {
+    var rgb = color.match(/\d+/g); // Extract RGB values
+    var grayscaleValue = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]; // Calculate grayscale value
+    return grayscaleValue;
+}
+
+// Call the function initially to display the current date and time
+displayDateTime();
+
+// Update the date and time every second
+updateTimeInterval = setInterval(displayDateTime, 1000);
+
+let oscillator; // Declare oscillator as a global variable
+
+// Function to handle input
+function handleInput(input) {
+    if (input.startsWith('#')) {
+        // Treat as hexadecimal color code
+        changeBackgroundColor(input);
+    } else if (input.startsWith('!')) {
+        // Change font of everything in the input field if ! is the first character
+        document.getElementById("colorInput").style.fontFamily = "'Morse', monospace";
+    } else if (input.includes('?')) {
+        // Stop updating date and time
+        clearInterval(updateTimeInterval);
+        // Scramble text
+        scrambleEnabled = true;
+        clearInterval(randomizeInterval); // Clear any existing interval
+        randomizeInterval = setInterval(randomizeDateTime, 1000);
+        
+        // Generate a random 7-digit number
+        randomNumber = generateRandomNumber();
+        
+        // Replace the previous random number with the new one next to the question mark
+        input = replacePreviousRandomNumber(input, randomNumber);
+        
+        // Update input field with the modified input
+        document.getElementById("colorInput").value = input;
+    } else if (input.startsWith('$') && input.endsWith('$')) {
+        // Treat as countdown timer if $ is the first and last character
+        startCountdown(input.substring(1, input.length - 1)); // Start countdown with the text between the $ symbols
+    } else if (input === '/') {
+        // Open the Downloads directory
+        window.open('file:///C:/Users/HP/Downloads/', '_blank');
+    } else if (input.endsWith('%')) {
+        // Play musical notes if input ends with '%'
+        const notes = input.slice(0, -1); // Remove '%' 
+        if (!isNaN(parseInt(notes))) {
+            // If there is a number, play frequency
+            playFrequency(parseInt(notes));
+        } else {
+            // If there are letters, play notes
+            playMusicalNotes(notes);
+        }
+    } else if (input.endsWith('&')) {
+        // Reverse the text in the input field (except the &)
+        document.getElementById("colorInput").value = reverseString(input.slice(0, -1)) + '&';
+    } else {
+        // Reset font family to default if input does not contain a question mark, exclamation mark, or $
+        document.getElementById("colorInput").style.fontFamily = "'Square', monospace";
+        scrambleEnabled = false;
+        clearInterval(randomizeInterval); // Stop scrambling
+        clearInterval(updateTimeInterval); // Start updating date and time
+        updateTimeInterval = setInterval(displayDateTime, 1000); // Restart updating date and time
+        
+        // Stop playing the oscillator if it's currently playing
+        stopPlaying();
+    }
+}
+
+// Function to reverse a string
+function reverseString(str) {
+    return str.split('').reverse().join('');
+}
+
+// Function to play a specific frequency
+function playFrequency(frequency) {
+    // Stop the oscillator if it's currently playing
+    stopPlaying();
+    
+    const duration = 500; // Duration of the note in milliseconds
+    // Create an oscillator node
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain(); // Create a gain node to control the volume
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
+    oscillator.connect(gainNode); // Connect oscillator to gain node
+    gainNode.connect(audioContext.destination); // Connect gain node to audio destination
+    // Set volume level
+    gainNode.gain.value = 1.0; // Change this value to adjust volume (0 to 1)
+    // Start the oscillator
+    oscillator.start();
+}
+
+// Function to stop playing the oscillator
+function stopPlaying() {
+    if (oscillator) {
+        oscillator.stop();
+        oscillator = null; // Reset oscillator
+    }
+}
+
+let countdownInterval;
+let countdownStartTime;
+let countdownDuration;
+
+// Function to start countdown timer
+function startCountdown(seconds) {
+    seconds = parseInt(seconds); // Convert input to integer
+    if (isNaN(seconds) || seconds <= 0) return; // Ignore if input is not a valid number or negative
+    
+    // Store the global time when countdown starts
+    countdownStartTime = Date.now();
+    countdownDuration = seconds;
+
+    // Update countdown timer
+    updateCountdown();
+    
+    // Update countdown every second
+    countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+// Function to update countdown timer
+function updateCountdown() {
+    // Calculate time elapsed since countdown started
+    const elapsedTime = Math.floor((Date.now() - countdownStartTime) / 1000);
+    
+    // Calculate remaining time
+    let remainingTime = countdownDuration - elapsedTime;
+  
+    // Update input field with remaining seconds
+    document.getElementById("colorInput").value = "$" + remainingTime;
+}
+
+// Function to randomize day, date, and time
+function randomizeDateTime() {
+    if (!scrambleEnabled) return;
+    var characters = 'abcdefghijklmnopqrstuvwxyz';
+    var dayOfWeekElement = document.getElementById("dayOfWeek");
+    var dateElement = document.getElementById("date");
+    var timeElement = document.getElementById("time");
+
+    // Randomize day of week
+    var randomizedDay = '';
+    for (var i = 0; i < dayOfWeekElement.textContent.length; i++) {
+        var char = dayOfWeekElement.textContent[i];
+        randomizedDay += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    dayOfWeekElement.textContent = randomizedDay;
+
+    // Randomize date
+    var randomizedDate = '';
+    for (var i = 0; i < dateElement.textContent.length; i++) {
+        var char = dateElement.textContent[i];
+        randomizedDate += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    dateElement.textContent = randomizedDate;
+
+    // Randomize time
+    var randomizedTime = '';
+    for (var i = 0; i < timeElement.textContent.length; i++) {
+        var char = timeElement.textContent[i];
+        randomizedTime += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    timeElement.textContent = randomizedTime;
+}
+
+// Function to change background color based on input value
+function changeBackgroundColor(color) {
+    // Remove '#' character if included
+    color = color.replace('#', '');
+
+    // Test if the input is a valid hexadecimal color value
+    if (/^[0-9A-Fa-f]{6}$/.test(color)) {
+        // If valid, set the background color
+        document.body.style.backgroundColor = '#' + color;
+    }
+}
+
+// Function to replace the previous random number with the new one next to the question mark
+function replacePreviousRandomNumber(input, newNumber) {
+    const index = input.indexOf('?'); // Find the index of the question mark
+    if (index !== -1) {
+        // Replace the number after the question mark with the new random number
+        const start = index - newNumber.toString().length; // Start index of the number before the question mark
+        const end = index - 1; // End index of the number before the question mark
+        input = input.substring(0, start) + newNumber + input.substring(end + 1);
+    }
+    return input;
+}
+
+// Function to generate a random 7-digit number
+function generateRandomNumber() {
+    return Math.floor(1000000 + Math.random() * 9000000); // Generates a random number between 1000000 and 9999999
+}
+
+// Function to play musical notes
+function playMusicalNotes(notes) {
+    const duration = 600; // Duration of each note in milliseconds
+    let noteIndex = 0;
+
+    // Split notes into individual characters
+    const noteArray = notes.split('');
+
+    // Function to play a single note
+    function playNote() {
+        if (noteIndex < noteArray.length) {
+            const note = noteArray[noteIndex++];
+            // Map note characters to their corresponding frequencies
+            const noteFrequencies = {
+                'C': 261.63,
+                'D': 293.66,
+                'E': 329.63,
+                'F': 349.23,
+                'G': 392.00,
+                'A': 440.00,
+                'B': 493.88
+            };
+            const frequency = noteFrequencies[note.toUpperCase()];
+            if (frequency) {
+                // Create an oscillator node
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = frequency;
+                oscillator.connect(audioContext.destination);
+                // Start the oscillator
+                oscillator.start();
+
+                // Stop the oscillator after the specified duration
+                setTimeout(() => {
+                    oscillator.stop();
+                    playNote(); // Play the next note
+                }, duration);
+            } else if (note === '(') {
+                // Handle compound notes in brackets
+                let compoundNote = '';
+                while (noteArray[noteIndex] !== ')') {
+                    compoundNote += noteArray[noteIndex++];
+                }
+                noteIndex++; // Skip the closing bracket
+                // Play compound note
+                playCompoundNotes(compoundNote);
+            }
+        }
+    }
+
+    // Function to play compound notes
+    function playCompoundNotes(compoundNotes) {
+        // Split compound notes into individual characters
+        const compoundNoteArray = compoundNotes.split('');
+        // Play compound notes simultaneously
+        compoundNoteArray.forEach(note => playSingleCompoundNote(note));
+    }
+
+    // Function to play a single compound note
+    function playSingleCompoundNote(note) {
+        // Map note characters to their corresponding frequencies
+        const noteFrequencies = {
+            'C': 261.63,
+            'D': 293.66,
+            'E': 329.63,
+            'F': 349.23,
+            'G': 392.00,
+            'A': 440.00,
+            'B': 493.88
+        };
+        const frequency = noteFrequencies[note.toUpperCase()];
+        if (frequency) {
+            // Create an oscillator node
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequency;
+            oscillator.connect(audioContext.destination);
+            // Start the oscillator
+            oscillator.start();
+            // Stop the oscillator after the specified duration
+            setTimeout(() => {
+                oscillator.stop();
+            }, duration);
+        }
+    }
+
+    // Start playing notes
+    playNote();
+}
+
+</script>
+
+</body>
+</html>
